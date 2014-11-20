@@ -68,40 +68,78 @@ end
 # lot of recursive tree-walking going on, it's an order of magnitude faster
 # than either render(:partial) or content_tag
 def render_facet_hierarchy_item(field_name, data, key)
+
   item = data[:_]
+  path = item.qvalue.to_s.split(":")
+  level = path.length.to_s
   subset = data.reject { |k,v| ! k.is_a?(String) }
-  
+
   li_class = subset.empty? ? 'h-leaf' : 'h-node'
-  li = ul = ''
-  
+  li_class = ''
+  li = ul =''
+
   if item.nil?
     li = key
-  elsif facet_in_params?(field_name, item.qvalue)
-    li = render_selected_qfacet_value(field_name, item)
+  #elsif facet_in_params?(field_name, item.qvalue)
+  # li = render_selected_qfacet_value(field_name, item)
   else
     li = render_qfacet_value(field_name, item)
   end
-  
+
   unless subset.empty?
-    subul = subset.keys.sort.collect do |subkey| 
-      render_facet_hierarchy_item(field_name, subset[subkey], subkey) 
+    subul = subset.keys.sort.collect do |subkey|
+      render_facet_hierarchy_item(field_name, subset[subkey], subkey)
     end.join('')
-    ul = "<ul>#{subul}</ul>".html_safe
+    ul = "<ul class='facet-hierarchy' style='display: block;'>#{subul}</ul>".html_safe
   end
-  
-  %{<li class="#{li_class}">#{li.html_safe}#{ul.html_safe}</li>}.html_safe
+
+  li_class = ''
+  marginRight = 'margin-right:0px;'
+  addHeader = ''
+  if level.to_s == '1'
+    marginRight = 'margin-right:60px;'
+    # two lines below for collapsing
+    #addHeader= '<h4 class="">' + item.qvalue + '</span><i class="icon-chevron"></i></h4>'
+      #addHeader= '<h4 class="">' + item.qvalue + '<span>' + render_facet_count(item.hits) +  '</span><i class="icon-chevron"></i></h4>'
+    addHeader= '<p class="hf">' + item.qvalue + '<span>'+ render_facet_count(item.hits) +   '</span> <i class="icon-chevron"></i></p>'
+    li=''
+  end
+
+  %{<li class="#{li_class}" style="padding-right:0px;#{marginRight}">#{addHeader}#{li.html_safe}#{ul.html_safe}</li>}.html_safe
 end
 
-def render_hierarchy(field)
-  prefix = field.field.split(/_/).first
-  tree = facet_tree(prefix)[field.field]
+
+  def render_hierarchy(field)
+  #field = field.to_s
+  field = "decoration_facet" # 1) extrtact this from the new field
+  #puts "In hierBL: render_hierarchy: field = " + field
+  #prefix = field.field.split(/_/).first
+  prefix = field.split(/_/).first
+  #puts "In hierBL: render_hierarchy: prefix = " + prefix
+
+  #tree = facet_tree(prefix)[field.field]
+  tree = facet_tree(prefix)[field]
+
+  #puts "In hierBL: render_hierarchy: about to sort tree"
+  #tree.keys.sort.collect do |key|
+  #  i = 0
+  #  while i < 1
+  #    render_facet_header(tree[key])
+  #    i+=1
+  #  end
+  #end.join("\n").html_safe
+
   tree.keys.sort.collect do |key|
-    render_facet_hierarchy_item(field.field, tree[key], key)
+    #render_facet_hierarchy_item(field.field, tree[key], key)
+    render_facet_hierarchy_item(field, tree[key], key)
   end.join("\n").html_safe
 end
 
 def render_qfacet_value(facet_solr_field, item, options ={})    
-  (link_to_unless(options[:suppress_link], item.value, add_facet_params(facet_solr_field, item.qvalue), :class=>"facet_select label") + " " + render_facet_count(item.hits)).html_safe
+  #(link_to_unless(options[:suppress_link], item.value, add_facet_params(facet_solr_field, item.qvalue), :class=>"facet_select label") + " " + render_facet_count(item.hits)).html_safe
+  (link_to_unless(options[:suppress_link], item.value, add_facet_params(facet_solr_field, item.qvalue), :class=>"labelnonesuch")       + " " + render_facet_count(item.hits)).html_safe
+
+
 end
 
 # Standard display of a SELECTED facet value, no link, special span
@@ -120,6 +158,7 @@ def facet_tree(prefix)
       facet_field = [prefix,key].compact.join('_')
       @facet_tree[prefix][facet_field] ||= {}
       data = @response.facet_by_field_name(facet_field)
+
       next if data.nil?
 
       data.items.each { |facet_item|

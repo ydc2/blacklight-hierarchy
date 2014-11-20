@@ -6,3 +6,12 @@ Gemfile.lock
 test/dummy/log
 *.sqlite3
 .rvmrc
+
+# Ignore bundler config
+/.bundle
+
+# Ignore IDEA IDE
+/.idea/*
+/DESMM Blacklight.iml
+
+.DS_Store

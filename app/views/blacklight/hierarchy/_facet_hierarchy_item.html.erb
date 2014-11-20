@@ -2,8 +2,19 @@
   item = data[:_]
   subset = data.reject { |k,v| ! k.is_a?(String) }
 %>
-
-<li class="<%= subset.empty? ? 'h-leaf' : 'h-node'  %>">
+<style>
+    li {
+        list-style: none;
+        #margin-right: 1em;
+        margin-right:60px;
+        padding-bottom: 0.3em;
+        padding-right: 0px;
+        clear: right;
+    }
+</style>
+<!--<li class="<%= subset.empty? ? 'h-leaf' : 'h-node'  %>"-->
+<!--<li margin-right="60px">-->
+<li class = 'h-node' margin-right=""0px">
   <% if item.nil? %>
     <%= key %>              
   <% else %>
