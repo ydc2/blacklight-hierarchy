@@ -25,7 +25,6 @@
         // Attach the toggle behavior to the h4 tag
         $('.hf', f_content.parent()).click(function(){
         //$('h4', f_content.parent()).click(function(){
-            //alert("in user interaction")
             // toggle the content
             $(this).toggleClass('twiddle-open');
             $(this).next("ul").slideToggle();
