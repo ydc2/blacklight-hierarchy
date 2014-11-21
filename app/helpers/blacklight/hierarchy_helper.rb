@@ -100,7 +100,8 @@ end
       # two lines below for collapsing
       #addHeader= '<h4 class="">' + item.qvalue + '</span><i class="icon-chevron"></i></h4>'
       #addHeader= '<h4 class="">' + item.qvalue + '<span>' + render_facet_count(item.hits) +  '</span><i class="icon-chevron"></i></h4>'
-      addHeader= '<p class="hf">' + item.qvalue + '<span style="padding-left:60px !important">' + item.hits.to_s + '</span><i class="icon-chevron"></i></p>'
+      addHeader= '<p class="hf">' + item.qvalue + '<span style="margin-left:-100px;float:right !important">' + item.hits.to_s + '</span><i class="icon-chevron" style="margin-right:-30px"></i></p>'
+
       li=''
     end
 
