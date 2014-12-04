@@ -97,69 +97,14 @@ end
     addHeader = ''
     if level.to_s == '1'
       marginRight = 'margin-right:60px;'
-      # two lines below for collapsing
-      #addHeader= '<h4 class="">' + item.qvalue + '</span><i class="icon-chevron"></i></h4>'
-      #addHeader= '<h4 class="">' + item.qvalue + '<span>' + render_facet_count(item.hits) +  '</span><i class="icon-chevron"></i></h4>'
-      addHeader= '<p class="hf">' + item.qvalue + '<span style="margin-left:-100px;float:right !important">' + item.hits.to_s + '</span><i class="icon-chevron" style="margin-right:-30px"></i></p>'
-
-      li=''
+      if !subset.empty?
+        addHeader= '<p class="hf">' + item.qvalue + '<span style="margin-left:-100px; margin-right:-50px;float:right !important">' + item.hits.to_s + '</span><i class="icon-chevron" style="margin-right:-20px"></i></p>'
+        li=''
+      end
     end
 
     %{<li class="#{li_class}" style="padding-right:0px;#{marginRight}">#{addHeader}#{li.html_safe}#{ul.html_safe}</li>}.html_safe
   end
-
-# Putting bare HTML strings in a helper sucks. But in this case, with a
-# lot of recursive tree-walking going on, it's an order of magnitude faster
-# than either render(:partial) or content_tag
-def render_facet_hierarchy_item_almost(field_name, data, key)
-
-  item = data[:_]
-  path = item.qvalue.to_s.split(":")
-  level = path.length.to_s
-  subset = data.reject { |k,v| ! k.is_a?(String) }
-
-  #puts "path = " + path.to_s
-
-  li_class = subset.empty? ? 'h-leaf' : 'h-node'
-  li_class = ''
-  li = ul =''
-
-  if item.nil?
-    li = key
-    #elsif facet_in_params?(field_name, item.qvalue)
-    # li = render_selected_qfacet_value(field_name, item)
-  else
-    li = render_qfacet_value(field_name, item)
-  end
-
-  unless subset.empty?
-    subul = subset.keys.sort.collect do |subkey|
-      #puts 'about to render iten partial subkey' + subkey
-      render_facet_hierarchy_item(field_name, subset[subkey], subkey)
-      %{<li>hi there</li>}
-    end.join('')
-    ul = "<ul class='facet-hierarchy' style='display: block;'>#{subul}</ul>".html_safe
-    puts "ul = + subul: " + subul
-  end
-
-  li_class = ''
-  marginRight = 'margin-right:0px;'
-  addHeader = ''
-  if level.to_s == '1'
-    puts "LEVEL 1"
-    marginRight = 'margin-right:60px;'
-    # two lines below for collapsing
-    #addHeader= '<h4 class="">' + item.qvalue + '</span><i class="icon-chevron"></i></h4>'
-    #addHeader= '<h4 class="">' + item.qvalue + '<span>' + render_facet_count(item.hits) +  '</span><i class="icon-chevron"></i></h4>'
-    addHeader= '<p class="hf">' + item.qvalue + '<span>'+ render_facet_count(item.hits) +   '</span> <i class="icon-chevron"></i></p>'
-    li=''
-  end
-
-  %{<li class="#{li_class}" style="padding-right:0px;#{marginRight}">#{addHeader}#{li.html_safe}#{ul.html_safe}</li>}.html_safe
-  %{<li class="#{li_class}" style="padding-right:0px;#{marginRight}">#{li.html_safe}#{ul.html_safe}</li>}.html_safe
-  puts '%{<li class="#{li_class}" style="padding-right:0px;#{marginRight}">#{addHeader}#{li.html_safe}#{ul.html_safe}</li>}.html_safe'
-end
-
 
 def render_hierarchy(field)
   field = field::field
@@ -167,20 +112,17 @@ def render_hierarchy(field)
   puts "In hierBL: render_hierarchy: field = " + field.to_s
   #prefix = field.field.split(/_/).first
   prefix = field.split(/_/).first
+  # e.g. 'manifest_label_t'; need to go up to the last '_' to get prefix.
+  #prefix = field.split(/_/).last
   puts "In hierBL: render_hierarchy: prefix = " + prefix
 
   #tree = facet_tree(prefix)[field.field]
   tree = facet_tree(prefix)[field]
   puts "In hierBL: render_hierarchy: about to sort tree"
-  puts 'keys =  ' + tree.keys.to_s
+  puts 'In hierBL: the keys =  ' + tree.keys.to_s
 
   tree.keys.sort.collect do |key|
-    #render_facet_hierarchy_item(field.field, tree[key], key)
-    #puts 'about to render item: field: ' + field + "  key: " + key
-
     render_facet_hierarchy_item(field, tree[key], key)
-
-    #puts 'just rendered item'
   end.join("\n").html_safe
 
 end
@@ -207,9 +149,8 @@ def facet_tree(prefix)
 
     blacklight_config.facet_display[:hierarchy][prefix].each { |key|
 
-      puts "tree:prefix = "+prefix
-      puts "tree:key= " + key
-
+      #puts "In facet_tree:prefix = "+prefix
+      #puts "In facet_tree:key= " + key
 
       facet_field = [prefix,key].compact.join('_')
       @facet_tree[prefix][facet_field] ||= {}
@@ -229,13 +170,24 @@ def facet_tree(prefix)
         #puts "treeloop: loc; " + loc.to_s
         while path.length > 0
           loc = loc[path.shift] ||= {}
-          #puts "loc = " + loc.to_s
+         # if prefix == "language"
+            #puts "loc = " + loc.to_s
+         # end
         end
         loc[:_] = HierarchicalFacetItem.new(facet_item.value, facet_item.value.split(/\s*:\s*/).last, facet_item.hits)
+        puts loc[:_].to_s
       }
     }
   end
-  puts "tree: keys = " + @facet_tree[prefix].keys.to_s
+
+  #puts facet "In facet_tree: keys = " + @facet_tree[prefix].keys.to_s
+  #if prefix == 'language'
+    #puts "In facet_tree:keys[1]: " + @facet_tree[prefix].keys[1]
+    #puts @facet_tree[prefix].to_s
+  #else
+    #puts "godie"
+  #end
+
   @facet_tree[prefix]
 end
 
