@@ -104,6 +104,7 @@ end
     end
 
     %{<li class="#{li_class}" style="padding-right:0px;#{marginRight}">#{addHeader}#{li.html_safe}#{ul.html_safe}</li>}.html_safe
+    i = 1;
   end
 
 def render_hierarchy(field)
