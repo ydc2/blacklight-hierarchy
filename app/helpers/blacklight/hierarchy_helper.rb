@@ -67,7 +67,7 @@ end
 # lot of recursive tree-walking going on, it's an order of magnitude faster
 # than either render(:partial) or content_tag
   def render_facet_hierarchy_item(field_name, data, key)
-
+    #puts 'data = ' + data.to_s
     item = data[:_]
     path = item.qvalue.to_s.split(":")
     level = path.length.to_s
@@ -85,17 +85,30 @@ end
       li = render_qfacet_value(field_name, item)
     end
 
+    #puts 'subset    = ' + subset.to_s
+    #subset = customSort subset
+    #puts 'subset now: ' + subset.to_s
+
     unless subset.empty?
+      subset = customSort subset
+      #puts 'subset    = ' + subset.to_s
       subul = subset.keys.sort.collect do |subkey|
+        #puts "=============== subset recursion ===================="
+        #puts 'subkey: ' + subkey
+        #puts ''
+        #puts 'subset[subkey]: ' + subset[subkey].to_s
+        #puts ''
         render_facet_hierarchy_item(field_name, subset[subkey], subkey)
       end.join('')
+
       ul = "<ul class='facet-hierarchy' style='display: block;'>#{subul}</ul>".html_safe
+      #puts 'ul = ' + ul
     end
 
     li_class = ''
     marginRight = 'margin-right:0px;'
     addHeader = ''
-    if level.to_s == '1'
+    if level.to_s == '1' #|| level.to_s == '2'  || level.to_s == '3'
       marginRight = 'margin-right:60px;'
       if !subset.empty?
         addHeader= '<p class="hf">' + item.qvalue + '<span style="margin-left:-100px; margin-right:-50px;float:right !important">' + item.hits.to_s + '</span><i class="icon-chevron" style="margin-right:-20px"></i></p>'
@@ -104,24 +117,13 @@ end
     end
 
     %{<li class="#{li_class}" style="padding-right:0px;#{marginRight}">#{addHeader}#{li.html_safe}#{ul.html_safe}</li>}.html_safe
-    i = 1;
   end
 
 def render_hierarchy(field)
   field = field::field
-  #field = "decoration_facet" # 1) extrtact t:his from the new field
-  puts "In hierBL: render_hierarchy: field = " + field.to_s
-  #prefix = field.field.split(/_/).first
   prefix = field.split(/_/).first
-  # e.g. 'manifest_label_t'; need to go up to the last '_' to get prefix.
-  #prefix = field.split(/_/).last
-  puts "In hierBL: render_hierarchy: prefix = " + prefix
-
-  #tree = facet_tree(prefix)[field.field]
   tree = facet_tree(prefix)[field]
-  puts "In hierBL: render_hierarchy: about to sort tree"
-  puts 'In hierBL: the keys =  ' + tree.keys.to_s
-
+  tree = customSort tree
   tree.keys.sort.collect do |key|
     render_facet_hierarchy_item(field, tree[key], key)
   end.join("\n").html_safe
@@ -130,9 +132,7 @@ end
 
 def render_qfacet_value(facet_solr_field, item, options ={})
   #(link_to_unless(options[:suppress_link], item.value, add_facet_params(facet_solr_field, item.qvalue), :class=>"facet_select label") + " " + render_facet_count(item.hits)).html_safe
-  (link_to_unless(options[:suppress_link], item.value, add_facet_params(facet_solr_field, item.qvalue), :class=>"labelnonesuch")       + " " + render_facet_count(item.hits)).html_safe
-
-
+  (link_to_unless(options[:suppress_link], item.value, add_facet_params(facet_solr_field, item.qvalue) )       + " " + render_facet_count(item.hits)).html_safe
 end
 
 # Standard display of a SELECTED facet value, no link, special span
@@ -144,52 +144,67 @@ end
 
 HierarchicalFacetItem = Struct.new :qvalue, :value, :hits
 def facet_tree(prefix)
+  puts 'prefix = ' + prefix
   @facet_tree ||= {}
   if @facet_tree[prefix].nil?
     @facet_tree[prefix] = {}
 
     blacklight_config.facet_display[:hierarchy][prefix].each { |key|
-
-      #puts "In facet_tree:prefix = "+prefix
-      #puts "In facet_tree:key= " + key
-
       facet_field = [prefix,key].compact.join('_')
       @facet_tree[prefix][facet_field] ||= {}
       data = @response.facet_by_field_name(facet_field)
-
       next if data.nil?
 
       data.items.each { |facet_item|
-        #puts "treeloop:facet_item = " + facet_item.to_s
-        #puts "treeloop:facet_item.value = " + facet_item.value
-        #puts "treeloop:facet_item.value.split = " + facet_item.value.split(/\s*:\s*/).last
-        #puts "treeloop:facet_item.hits = " + facet_item.hits.to_s
-        #puts ''
         path = facet_item.value.split(/\s*:\s*/)
-        #puts "treeloop: path: " + path.to_s
+        #puts "prefix: " + prefix + "  facet_field: " + facet_field
         loc = @facet_tree[prefix][facet_field]
-        #puts "treeloop: loc; " + loc.to_s
         while path.length > 0
           loc = loc[path.shift] ||= {}
-         # if prefix == "language"
-            #puts "loc = " + loc.to_s
-         # end
         end
         loc[:_] = HierarchicalFacetItem.new(facet_item.value, facet_item.value.split(/\s*:\s*/).last, facet_item.hits)
-        puts loc[:_].to_s
+
+        if facet_item.value.start_with?("Gratian's Decretum")
+          gratianItems = facet_item.value.split(/\s*:\s*/)
+          gratianItem = ''
+          for i in 1..gratianItems.length
+            gratianItem +=gratianItems[i].to_s
+          end
+          loc[:_] = HierarchicalFacetItem.new(facet_item.value, gratianItem, facet_item.hits)
+          #puts 'loc = '+ loc.to_s
+          #puts loc[:_].to_s
+      end
       }
     }
   end
-
-  #puts facet "In facet_tree: keys = " + @facet_tree[prefix].keys.to_s
-  #if prefix == 'language'
-    #puts "In facet_tree:keys[1]: " + @facet_tree[prefix].keys[1]
-    #puts @facet_tree[prefix].to_s
-  #else
-    #puts "godie"
-  #end
-
   @facet_tree[prefix]
+
+  #unless  @facet_tree[prefix].nil?
+    #puts @facet_tree[prefix].to_s
+  #end
 end
+
+def customSort tree
+  new_tree = tree
+  if !new_tree.keys.nil?
+    tree.keys.each { |key|
+      if key =~ /.\d/ && key.start_with?(".")
+        oldKey = key
+        keyNum = oldKey.scan(/\d+/).first
+
+        keyNumLen = keyNum.length+1
+        keySuffix = oldKey[keyNumLen..-1]
+
+        keyNumPadded = keyNum.rjust(4, '0')
+        newKey =  '.' + keyNumPadded + keySuffix
+        #unless oldKey == newKey
+          new_tree[newKey] = new_tree.delete(oldKey)
+        #end
+      end
+    }
+  end
+  puts 'new_tree    = ' + new_tree.to_s
+  new_tree
+  end
 
 end
