@@ -67,7 +67,6 @@ end
 # lot of recursive tree-walking going on, it's an order of magnitude faster
 # than either render(:partial) or content_tag
   def render_facet_hierarchy_item(field_name, data, key)
-    #puts 'data = ' + data.to_s
     item = data[:_]
     path = item.qvalue.to_s.split(":")
     level = path.length.to_s
@@ -85,19 +84,9 @@ end
       li = render_qfacet_value(field_name, item)
     end
 
-    #puts 'subset    = ' + subset.to_s
-    #subset = customSort subset
-    #puts 'subset now: ' + subset.to_s
-
     unless subset.empty?
       subset = customSort subset
-      #puts 'subset    = ' + subset.to_s
       subul = subset.keys.sort.collect do |subkey|
-        #puts "=============== subset recursion ===================="
-        #puts 'subkey: ' + subkey
-        #puts ''
-        #puts 'subset[subkey]: ' + subset[subkey].to_s
-        #puts ''
         render_facet_hierarchy_item(field_name, subset[subkey], subkey)
       end.join('')
 
@@ -157,7 +146,6 @@ def facet_tree(prefix)
 
       data.items.each { |facet_item|
         path = facet_item.value.split(/\s*:\s*/)
-        #puts "prefix: " + prefix + "  facet_field: " + facet_field
         loc = @facet_tree[prefix][facet_field]
         while path.length > 0
           loc = loc[path.shift] ||= {}
@@ -171,17 +159,11 @@ def facet_tree(prefix)
             gratianItem +=gratianItems[i].to_s
           end
           loc[:_] = HierarchicalFacetItem.new(facet_item.value, gratianItem, facet_item.hits)
-          #puts 'loc = '+ loc.to_s
-          #puts loc[:_].to_s
       end
       }
     }
   end
   @facet_tree[prefix]
-
-  #unless  @facet_tree[prefix].nil?
-    #puts @facet_tree[prefix].to_s
-  #end
 end
 
 def customSort tree
@@ -197,13 +179,11 @@ def customSort tree
 
         keyNumPadded = keyNum.rjust(4, '0')
         newKey =  '.' + keyNumPadded + keySuffix
-        #unless oldKey == newKey
-          new_tree[newKey] = new_tree.delete(oldKey)
-        #end
+        new_tree[newKey] = new_tree.delete(oldKey)
       end
     }
   end
-  puts 'new_tree    = ' + new_tree.to_s
+  #puts 'new_tree    = ' + new_tree.to_s
   new_tree
   end
 
