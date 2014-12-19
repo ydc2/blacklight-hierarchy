@@ -86,22 +86,36 @@ end
 
     unless subset.empty?
       subset = customSort subset
+      puts '-----------------------'
       subul = subset.keys.sort.collect do |subkey|
         render_facet_hierarchy_item(field_name, subset[subkey], subkey)
       end.join('')
 
       ul = "<ul class='facet-hierarchy' style='display: block;'>#{subul}</ul>".html_safe
-      #puts 'ul = ' + ul
+
     end
 
     li_class = ''
     marginRight = 'margin-right:0px;'
     addHeader = ''
-    if level.to_s == '1' #|| level.to_s == '2'  || level.to_s == '3'
-      marginRight = 'margin-right:60px;'
+    if level.to_s == '1' || level.to_s == '2'  || level.to_s == '3'
+      if level.to_s == '1'
+        marginRight = 'margin-right:60px;'
+      end
       if !subset.empty?
-        addHeader= '<p class="hf">' + item.qvalue + '<span style="margin-left:-100px; margin-right:-50px;float:right !important">' + item.hits.to_s + '</span><i class="icon-chevron" style="margin-right:-20px"></i></p>'
+        headerAnchor = '<a href="/?f%5B' + field_name + '%5D%5B%5D=' + URI.encode(item.qvalue) + '">'
+        puts 'item.qvalue = ' + item.qvalue
+        puts 'item.value = ' + item.value
+        if level.to_s == '1'
+          headerAnchor += item.qvalue
+        end
+        if level.to_s > '1'
+          headerAnchor += item.value
+        end
+        headerAnchor += '</a>'
+        addHeader= '<p>' + headerAnchor + '<span style="margin-left:-100px; margin-right:-50px;float:right !important">' + item.hits.to_s + '</span><i class="hf icon-chevron" style="margin-right:-20px"></i></p>'
         li=''
+        ul = "<ul class='facet-hierarchy' style='display: none;'>#{subul}</ul>".html_safe
       end
     end
 
@@ -112,7 +126,7 @@ def render_hierarchy(field)
   field = field::field
   prefix = field.split(/_/).first
   tree = facet_tree(prefix)[field]
-  tree = customSort tree
+  #tree = customSort tree
   tree.keys.sort.collect do |key|
     render_facet_hierarchy_item(field, tree[key], key)
   end.join("\n").html_safe
@@ -166,25 +180,34 @@ def facet_tree(prefix)
   @facet_tree[prefix]
 end
 
-def customSort tree
-  new_tree = tree
-  if !new_tree.keys.nil?
-    tree.keys.each { |key|
-      if key =~ /.\d/ && key.start_with?(".")
-        oldKey = key
-        keyNum = oldKey.scan(/\d+/).first
-
-        keyNumLen = keyNum.length+1
-        keySuffix = oldKey[keyNumLen..-1]
-
-        keyNumPadded = keyNum.rjust(4, '0')
-        newKey =  '.' + keyNumPadded + keySuffix
-        new_tree[newKey] = new_tree.delete(oldKey)
-      end
-    }
-  end
-  #puts 'new_tree    = ' + new_tree.to_s
-  new_tree
+  def customSort tree
+    new_tree = tree
+    if !new_tree.keys.nil?
+      tree.keys.each { |key|
+        if key.nil?
+          next
+        end
+        if key =~ /\d/
+          oldKey = key
+          keyNum = oldKey.scan(/\d+/).first
+          keyNumLen = keyNum.length
+          if keyNum.start_with?(".")
+            keyNumLen += keyNum.length+1
+          end
+          keySuffix = oldKey[keyNumLen..-1]
+          keyNumPadded = keyNum.rjust(4, '0')
+          newKey = ''
+          if oldKey.start_with?(".")
+            newKey = "."
+          end
+          newKey += keyNumPadded + keySuffix
+          puts oldKey.to_s + "=> " + newKey
+          new_tree[newKey] = new_tree.delete(oldKey)
+        end
+      }
+    end
+    #puts 'new_tree    = ' + new_tree.to_s
+    new_tree
   end
 
 end
