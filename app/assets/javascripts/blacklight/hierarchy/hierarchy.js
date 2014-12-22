@@ -26,9 +26,10 @@
         $('.hf', f_content.parent()).click(function(){
         //$('h4', f_content.parent()).click(function(){
             // toggle the content
-            $(this).toggleClass('twiddle-open');
-            $(this).next("ul").slideToggle();
-            //$(this).next().next().slideToggle();
+            //alert("toggle1");
+            $(this).parent().toggleClass('twiddle-open');
+            //$(this).next("ul").slideToggle();
+            $(this).parent().next().slideToggle();
         });
     };
     $(document).ready(function() {
