@@ -108,7 +108,7 @@ end
       end
       if !subset.empty?
         #headerAnchor = '<a href="/?f%5B' + field_name + '%5D%5B%5D=' + URI.encode(item.qvalue) + '">'
-        headerAnchor = '<a href="/?f%5B' + field_name + '%5D%5B%5D=' + URI.encode(item.qvalue)
+        #headerAnchor = '<a href="/?f%5B' + field_name + '%5D%5B%5D=' + URI.encode(item.qvalue)
         headerAnchor = '<a href="/?'
         u = URI.parse(request.original_url)
         if !u.query.nil?
