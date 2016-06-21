@@ -19,7 +19,8 @@ Gem::Specification.new do |s|
   s.add_dependency "rails", '>= 4.0.8'
   #s.add_dependency "blacklight", "~> 5", "< 6"
   #s.add_dependency "blacklight", ">=4.1.0"
-  s.add_dependency "blacklight", "=5.8"
+  #s.add_dependency "blacklight", "=5.8"
+  s.add_dependency "blacklight", ">=4.2"
   
   s.add_development_dependency "rspec-rails"
   s.add_development_dependency "sqlite3"
